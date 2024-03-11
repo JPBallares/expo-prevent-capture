@@ -184,6 +184,18 @@ const defaultPermissionsResponse: PermissionResponse = {
   status: PermissionStatus.GRANTED,
 };
 
+export const enable = (enabled: boolean) => {
+  ExpoPreventCaptureModule.enable(enabled);
+};
+
+export const enableSecureView = () => {
+  ExpoPreventCaptureModule.enableSecureView();
+};
+
+export const disableSecureView = () => {
+  ExpoPreventCaptureModule.disableSecureView();
+};
+
 export {
   Subscription,
   PermissionResponse,

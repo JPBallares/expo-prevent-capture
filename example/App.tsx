@@ -1,11 +1,24 @@
 import * as ExpoPreventCapture from "expo-prevent-capture";
-import { StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 export default function App() {
-  ExpoPreventCapture.preventScreenCaptureAsync();
+  if (Platform.OS === "ios") {
+    ExpoPreventCapture.enable(true);
+    ExpoPreventCapture.enableSecureView(); //This function blocks the Screen share/Recording and taking screenshot for iOS devices.
+  }
+
+  ExpoPreventCapture.addScreenshotListener(() => {
+    console.log("Screenshot taken!");
+  });
 
   return (
     <View style={styles.container}>
+      <Text>This page should not allow screenshots.</Text>
+      <Text>This page should not allow screenshots.</Text>
+      <Text>This page should not allow screenshots.</Text>
+      <Text>This page should not allow screenshots.</Text>
+      <Text>This page should not allow screenshots.</Text>
+      <Text>This page should not allow screenshots.</Text>
       <Text>This page should not allow screenshots.</Text>
     </View>
   );
