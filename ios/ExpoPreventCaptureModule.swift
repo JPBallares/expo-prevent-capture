@@ -1,44 +1,73 @@
 import ExpoModulesCore
 
+let onScreenshotEventName = "onScreenshot"
+
 public class ExpoPreventCaptureModule: Module {
-  // Each module class must implement the definition function. The definition consists of components
-  // that describes the module's functionality and behavior.
-  // See https://docs.expo.dev/modules/module-api for more details about available components.
+  private var isBeingObserved = false
+  private var isListening = false
+  private var blockView = UIView()
+
   public func definition() -> ModuleDefinition {
-    // Sets the name of the module that JavaScript code will use to refer to the module. Takes a string as an argument.
-    // Can be inferred from module's class name, but it's recommended to set it explicitly for clarity.
-    // The module will be accessible from `requireNativeModule('ExpoPreventCapture')` in JavaScript.
     Name("ExpoPreventCapture")
 
-    // Sets constant properties on the module. Can take a dictionary or a closure that returns a dictionary.
-    Constants([
-      "PI": Double.pi
+    Events(onScreenshotEventName)
+
+    OnCreate {
+      let boundLength = max(UIScreen.main.bounds.size.width, UIScreen.main.bounds.size.height)
+      blockView.frame = CGRect(x: 0, y: 0, width: boundLength, height: boundLength)
+      blockView.backgroundColor = .black
+    }
+
+    OnStartObserving {
+      self.setIsBeing(observed: true)
+    }
+
+    OnStopObserving {
+      self.setIsBeing(observed: false)
+    }
+
+    AsyncFunction("preventScreenCapture") {
+      // If already recording, block it
+      self.preventScreenRecording()
+
+      NotificationCenter.default.addObserver(self, selector: #selector(self.preventScreenRecording), name: UIScreen.capturedDidChangeNotification, object: nil)
+    }.runOnQueue(.main)
+
+    AsyncFunction("allowScreenCapture") {
+      NotificationCenter.default.removeObserver(self, name: UIScreen.capturedDidChangeNotification, object: nil)
+    }
+  }
+
+  private func setIsBeing(observed: Bool) {
+    self.isBeingObserved = observed
+    let shouldListen = self.isBeingObserved
+
+    if shouldListen && !isListening {
+      // swiftlint:disable:next line_length
+      NotificationCenter.default.addObserver(self, selector: #selector(self.listenForScreenCapture), name: UIApplication.userDidTakeScreenshotNotification, object: nil)
+      isListening = true
+    } else if !shouldListen && isListening {
+      NotificationCenter.default.removeObserver(self, name: UIApplication.userDidTakeScreenshotNotification, object: nil)
+      isListening = false
+    }
+  }
+
+  @objc
+  func preventScreenRecording() {
+    let isCaptured = UIScreen.main.isCaptured
+    let isMirrored = UIScreen.main.mirrored != nil
+
+    if (isCaptured || isMirrored) {
+      UIApplication.shared.keyWindow?.subviews.first?.addSubview(blockView)
+    } else {
+      blockView.removeFromSuperview()
+    }
+  }
+
+  @objc
+  func listenForScreenCapture() {
+    sendEvent(onScreenshotEventName, [
+      "body": nil
     ])
-
-    // Defines event names that the module can send to JavaScript.
-    Events("onChange")
-
-    // Defines a JavaScript synchronous function that runs the native code on the JavaScript thread.
-    Function("hello") {
-      return "Hello world! 👋"
-    }
-
-    // Defines a JavaScript function that always returns a Promise and whose native code
-    // is by default dispatched on the different thread than the JavaScript runtime runs on.
-    AsyncFunction("setValueAsync") { (value: String) in
-      // Send an event to JavaScript.
-      self.sendEvent("onChange", [
-        "value": value
-      ])
-    }
-
-    // Enables the module to be used as a native view. Definition components that are accepted as part of the
-    // view definition: Prop, Events.
-    View(ExpoPreventCaptureView.self) {
-      // Defines a setter for the `name` prop.
-      Prop("name") { (view: ExpoPreventCaptureView, prop: String) in
-        print(prop)
-      }
-    }
   }
 }

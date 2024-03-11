@@ -1,11 +1,12 @@
-import { StyleSheet, Text, View } from 'react-native';
-
-import * as ExpoPreventCapture from 'expo-prevent-capture';
+import * as ExpoPreventCapture from "expo-prevent-capture";
+import { StyleSheet, Text, View } from "react-native";
 
 export default function App() {
+  ExpoPreventCapture.preventScreenCaptureAsync();
+
   return (
     <View style={styles.container}>
-      <Text>{ExpoPreventCapture.hello()}</Text>
+      <Text>This page should not allow screenshots.</Text>
     </View>
   );
 }
@@ -13,8 +14,8 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
