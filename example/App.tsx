@@ -3,7 +3,6 @@ import { Platform, StyleSheet, Text, View } from "react-native";
 
 export default function App() {
   if (Platform.OS === "ios") {
-    ExpoPreventCapture.enable(true);
     ExpoPreventCapture.enableSecureView(); //This function blocks the Screen share/Recording and taking screenshot for iOS devices.
   }
 
